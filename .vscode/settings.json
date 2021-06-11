@@ -1,0 +1,30 @@
+{
+    "files.exclude": {
+        "/.git": true,
+        "/.svn": true,
+        "/.hg": true,
+        "/CVS": true,
+        "/.DS_Store": true,
+        "/*.pyc":true,
+        "**/__pycache__": true,
+        "**/.pytest_cache": true
+    },
+    "python.linting.mypyEnabled": false,
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true,
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": [
+        "--line-length=99"
+    ],
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        }
+    },
+    "python.linting.flake8Args": [
+        "--max-line-length=99",
+        "--ignore=E402,F841,F401,E302,E305",
+    ],
+    
+}

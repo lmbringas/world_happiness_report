@@ -1,0 +1,9 @@
+version: "3"
+
+services:
+  webserver:
+    build: .
+    ports:
+      - "8081:80"
+    volumes:
+      - ./app:/app
