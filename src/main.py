@@ -1,7 +1,8 @@
-import os
-import time
+import threading
 
 from fastapi import FastAPI, File, UploadFile
+
+from processing.run_pipeline import run_pipeline
 
 app = FastAPI()
 
@@ -13,10 +14,7 @@ async def hello_word():
 
 @app.post("/upload_report/")
 async def image(dataset: UploadFile = File(...)):
-    print(dataset)
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    filename = f"{dataset.filename}"
-    f = open(f"{filename}", "wb")
-    content = await dataset.read()
-    f.write(content)
+    pipeline = threading.Thread(target=run_pipeline, args=(dataset,), daemon=True)
+    pipeline.start()
+    pipeline.join()
     return {"okey": "polilla"}
