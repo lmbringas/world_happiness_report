@@ -5,12 +5,28 @@ import threading
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from processing.process_dataset import DATASET_DIRECTORY
 from processing.run_pipeline import run_pipeline
+from processing.utils import create_directory
 
 app = FastAPI()
+
+create_directory("../static")
+
+origins = [
+    "http://localhost",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.mount("/static", StaticFiles(directory="/static"), name="static")
 
