@@ -1,4 +1,5 @@
 import pickle
+import shutil
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +12,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 class NeuronalMapModel:
     root_directory = "../process_dataset"
-    ignored_columns = ["Country name", "year", "country_name_alpha_3"]
+    ignored_columns = ["Country name", "year", "country_name_alpha_3", "clean_country_names"]
     soms = {}
 
     def __init__(self, dataframe, filename):
@@ -55,10 +56,23 @@ class NeuronalMapModel:
         self._save_som_to_pickle()
 
     def _save_som_to_pickle(self):
+        root = f"{self.root_directory}/{self.filename}"
         for key in list(self.soms.keys()):
-            filepath = f"{self.root_directory}/{key}__{self.filename}.pickle"
+            filepath = f"{root}/{key}__{self.filename}.pickle"
             with open(filepath, "wb") as f:
                 pickle.dump(self.soms[key], f)
+                filepath = f"{root}/{key}__{self.filename}.pickle"
+
+        with open(f"{root}/model.pickle", "wb") as f:
+            pickle.dump(self, f)
+
+        self._finished_dataset()
+
+    def _finished_dataset(self):
+        source = f"{self.root_directory}/{self.filename}"
+        destination = f"{source}__finished"
+        dest = shutil.move(source, destination)
+        print(dest)
 
     def knn_impute_by_year(self, dataframe, columns):
         new_dataframe = dataframe.copy()

@@ -7,12 +7,13 @@ authors = ["lautaro <lm.bringas98@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 fastapi = "^0.65.2"
-neural-map = "^1.0.0"
 python-multipart = "^0.0.5"
 pycountry = "^20.7.3"
 pandas = "^1.2.4"
 seaborn = "^0.11.1"
 xlrd = "^2.0.1"
+neural-map = {git = "https://github.com/lmbringas/NeuralMap.git"}
+openpyxl = "^3.0.7"
 
 [tool.poetry.dev-dependencies]
 black = "^21.6b0"

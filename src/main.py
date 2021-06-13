@@ -1,15 +1,58 @@
+import os
+import pickle
 import threading
 
+import numpy as np
+import pandas as pd
 from fastapi import FastAPI, File, UploadFile
+from fastapi.staticfiles import StaticFiles
 
+from processing.process_dataset import DATASET_DIRECTORY
 from processing.run_pipeline import run_pipeline
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="/static"), name="static")
 
-@app.get("/")
-async def hello_word():
-    return {"status": "okey"}
+
+@app.get("/datasets")
+async def list_dataset():
+    datasets_folders = os.listdir(DATASET_DIRECTORY)
+    datasets = []
+    for dataset in datasets_folders:
+        dataset_splited = dataset.split("__")
+        print(dataset_splited[-1] == "finished")
+        if dataset_splited[-1] == "finished":
+            datasets.append(dataset_splited[0])
+    return {"datasets": datasets}
+
+
+@app.get("/years/")
+async def list_years(dataset_name: str):
+    path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/{dataset_name}.csv"
+    dataframe = pd.read_csv(path)
+    years = [int(x) for x in dataframe["year"].unique()]
+    years.sort()
+    return {"years": years}
+
+
+@app.get("/data/")
+async def get_data(dataset_name: str, year: int):
+    dataframe_path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/{dataset_name}.csv"
+    som_path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/{year}__{dataset_name}.pickle"
+    model_path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/model.pickle"
+    dataframe = pd.read_csv(dataframe_path)
+    som = None
+    model = None
+    with open(som_path, "rb") as f:
+        som = pickle.load(f)
+
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+
+    clusters = som.hdbscan()[0]
+    print(np.flip(np.unique(clusters)))
+    return {"data": ""}
 
 
 @app.post("/upload_report/")
