@@ -26,7 +26,6 @@
         "--max-line-length=99",
         "--ignore=E402,F841,F401,E302,E305",
     ],
-    "python.pythonPath": ".venv/bin/python",
     "files.watcherExclude": {
         "**/.git/objects/**": true,
         "**/.git/subtree-cache/**": true,

@@ -213,7 +213,6 @@ async def get_report_by_country(dataset_name: str, year: int, country_name: str)
     images = []
     for period in periods:
         name = df[df["country_name_alpha_3"] == country_name]["Country name"].to_list()[0]
-        print(period)
         som.plot_analysis(
             path,
             year_to_display,
@@ -224,7 +223,7 @@ async def get_report_by_country(dataset_name: str, year: int, country_name: str)
         )
         filename = f"/static/{period[0]}.png"
         images.append(filename)
-        plt.savefig(filename)
+        plt.savefig(filename, transparent=True)
 
     return {
         "data": {
