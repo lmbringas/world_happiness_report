@@ -51,7 +51,7 @@ class NeuronalMapModel:
                 initial_radius=4.0,
                 final_radius=1.0,
             )
-            self.soms[year] = som
+            self.soms[year] = {"values": experiment_values, "model": som}
 
         self._save_som_to_pickle()
 
@@ -60,7 +60,7 @@ class NeuronalMapModel:
         for key in list(self.soms.keys()):
             filepath = f"{root}/{key}__{self.filename}.pickle"
             with open(filepath, "wb") as f:
-                pickle.dump(self.soms[key], f)
+                pickle.dump(self.soms[key]["model"], f)
                 filepath = f"{root}/{key}__{self.filename}.pickle"
 
         with open(f"{root}/model.pickle", "wb") as f:

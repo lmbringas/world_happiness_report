@@ -69,19 +69,50 @@ async def get_data(dataset_name: str, year: int):
 
     clusters = som.hdbscan()[0]
     df = model.experiment_df
-    print(model.ignored_columns)
+
     scaler = MinMaxScaler()
     year_mask = df["year"] == year
     data_values = df[year_mask].drop(columns=model.ignored_columns).values
     experiment_values = scaler.fit_transform(data_values)
-    print(som.variables)
 
-    print(np.flip(np.unique(clusters)))
-    return {"data": ""}
+    columns = df.drop(columns=model.ignored_columns).columns
+
+    return_data = []
+    for cluster in np.flip(np.unique(clusters)):
+        cluster_name = f"Cluster-{cluster}" if cluster != -1 else "Outliers"
+        print(cluster_name)
+
+        data = {"name": cluster_name, "countries": []}
+
+        year_mask = model.imputed_df["year"] == year
+
+        countries = som.map_attachments(
+            experiment_values,
+            model.imputed_df[year_mask]["Country name"].tolist(),
+        )[clusters == cluster]
+
+        activations = som.map_attachments(
+            experiment_values,
+            experiment_values,
+        )[clusters == cluster]
+
+        for countriy_list, activation_list in zip(countries, activations):
+
+            for country, activation in zip(countriy_list, activation_list):
+                results = {perspective: act for perspective, act in zip(columns, activation)}
+                results["code"] = df[df["Country name"] == country].country_name_alpha_3.to_list()[
+                    0
+                ]
+
+                print(results)
+
+                data["countries"].append(results)
+        return_data.append(data)
+    return {"data": return_data}
 
 
 @app.post("/upload_report/")
-async def image(dataset: UploadFile = File(...)):
+async def upload_report(dataset: UploadFile = File(...)):
     pipeline = threading.Thread(target=run_pipeline, args=(dataset,), daemon=True)
     pipeline.start()
     pipeline.join()
