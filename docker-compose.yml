@@ -7,3 +7,5 @@ services:
       - "8081:80"
     volumes:
       - ./src:/app
+      - ./process_dataset:/process_dataset
+      - ./static:/static

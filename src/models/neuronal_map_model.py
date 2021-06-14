@@ -53,6 +53,7 @@ class NeuronalMapModel:
             )
             self.soms[year] = {"values": experiment_values, "model": som}
 
+        self._save_bubble_plot()
         self._save_som_to_pickle()
 
     def _save_som_to_pickle(self):
@@ -67,6 +68,20 @@ class NeuronalMapModel:
             pickle.dump(self, f)
 
         self._finished_dataset()
+
+    def _save_bubble_plot(self):
+        for key in list(self.soms.keys()):
+            year_mask = self.experiment_df["year"] == key
+            self.soms[key]["model"].plot_analysis(
+                self.soms[key]["values"],
+                attached_values=self.imputed_df[year_mask]["Life Ladder"],
+                aggregation_function=np.mean,
+                size=8,
+                title="Life Ladder",
+                display_value="cluster",
+            )
+            name = f"/static/{key}__{self.filename}.png"
+            plt.savefig(name)
 
     def _finished_dataset(self):
         source = f"{self.root_directory}/{self.filename}"

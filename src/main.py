@@ -93,7 +93,7 @@ async def get_data(dataset_name: str, year: int):
 
         activations = som.map_attachments(
             experiment_values,
-            experiment_values,
+            model.imputed_df[year_mask].drop(columns=model.ignored_columns).values,
         )[clusters == cluster]
 
         for countriy_list, activation_list in zip(countries, activations):

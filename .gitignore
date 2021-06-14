@@ -31,3 +31,6 @@ node_modules/
 .serverless/
 package-lock.json
 .idea
+static/**
+process_dataset/**
+

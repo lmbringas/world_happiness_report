@@ -8,6 +8,6 @@ RUN poetry config virtualenvs.create false
 
 RUN poetry install --no-dev 
 
-COPY ./app /app
+COPY ./src /app
 
 CMD ["/start-reload.sh"]
