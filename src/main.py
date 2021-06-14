@@ -7,6 +7,7 @@ import pandas as pd
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sklearn.preprocessing import MinMaxScaler
 
 from processing.process_dataset import DATASET_DIRECTORY
 from processing.run_pipeline import run_pipeline
@@ -17,7 +18,7 @@ app = FastAPI()
 create_directory("../static")
 
 origins = [
-    "http://localhost",
+    "*",
 ]
 
 app.add_middleware(
@@ -67,6 +68,14 @@ async def get_data(dataset_name: str, year: int):
         model = pickle.load(f)
 
     clusters = som.hdbscan()[0]
+    df = model.experiment_df
+    print(model.ignored_columns)
+    scaler = MinMaxScaler()
+    year_mask = df["year"] == year
+    data_values = df[year_mask].drop(columns=model.ignored_columns).values
+    experiment_values = scaler.fit_transform(data_values)
+    print(som.variables)
+
     print(np.flip(np.unique(clusters)))
     return {"data": ""}
 
