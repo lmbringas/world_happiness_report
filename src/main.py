@@ -55,10 +55,8 @@ async def list_years(dataset_name: str):
 
 @app.get("/data/")
 async def get_data(dataset_name: str, year: int):
-    dataframe_path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/{dataset_name}.csv"
     som_path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/{year}__{dataset_name}.pickle"
     model_path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/model.pickle"
-    dataframe = pd.read_csv(dataframe_path)
     som = None
     model = None
     with open(som_path, "rb") as f:
@@ -75,7 +73,8 @@ async def get_data(dataset_name: str, year: int):
     data_values = df[year_mask].drop(columns=model.ignored_columns).values
     experiment_values = scaler.fit_transform(data_values)
 
-    columns = df.drop(columns=model.ignored_columns).columns
+    columns = df.drop(columns=model.ignored_columns).columns.to_list()
+    columns.insert(0, "Life Ladder")
 
     return_data = []
     for cluster in np.flip(np.unique(clusters)):
@@ -113,5 +112,46 @@ async def get_data(dataset_name: str, year: int):
 async def upload_report(dataset: UploadFile = File(...)):
     pipeline = threading.Thread(target=run_pipeline, args=(dataset,), daemon=True)
     pipeline.start()
-    pipeline.join()
     return {"okey": "polilla"}
+
+
+@app.get("/report/")
+async def get_report(dataset_name: str, year: int):
+    som_path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/{year}__{dataset_name}.pickle"
+    model_path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/model.pickle"
+    som = None
+    model = None
+    with open(som_path, "rb") as f:
+        som = pickle.load(f)
+
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+
+    clusters = som.hdbscan()[0]
+    df = model.experiment_df
+
+    scaler = MinMaxScaler()
+    year_mask = df["year"] == year
+    data_values = df[year_mask].drop(columns=model.ignored_columns).values
+    experiment_values = scaler.fit_transform(data_values)
+
+    columns = df.drop(columns=model.ignored_columns).columns
+    year_mask = model.imputed_df["year"] == year
+
+    result = []
+    for cluster in np.flip(np.unique(clusters)):
+        cluster_name = f"Cluster {cluster}" if cluster != -1 else "Outliers"
+        countries = np.concatenate(
+            som.map_attachments(
+                experiment_values, model.imputed_df[year_mask]["Country name"].tolist()
+            )[clusters == cluster].ravel()
+        )
+
+        mapped_values = []
+        for mv in som.map_attachments(experiment_values, experiment_values)[clusters == cluster]:
+            mapped_values += mv[0].tolist()
+
+        data = {"name": cluster_name, "countries": countries, "values": mapped_values}
+        print(data)
+        result.append(data)
+    return {"data": result}
