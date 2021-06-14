@@ -149,7 +149,11 @@ async def get_report(dataset_name: str, year: int):
 
         mapped_values = []
         for mv in som.map_attachments(experiment_values, experiment_values)[clusters == cluster]:
-            mapped_values += mv
+            arr = []
+            for values in mv:
+                results = {perspective: value for perspective, value in zip(columns, values)}
+                arr.append(results)
+            mapped_values += arr
 
         mapped_values = np.array(mapped_values)
         data = {
