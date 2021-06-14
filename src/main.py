@@ -7,6 +7,7 @@ import pandas as pd
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from matplotlib import pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
 from processing.process_dataset import DATASET_DIRECTORY
@@ -164,3 +165,74 @@ async def get_report(dataset_name: str, year: int):
         print(data)
         result.append(data)
     return {"data": result}
+
+
+@app.get("/country_report/")
+async def get_report_by_country(dataset_name: str, year: int, country_name: str):
+    som_path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/{year}__{dataset_name}.pickle"
+    model_path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/model.pickle"
+    som = None
+    model = None
+    with open(som_path, "rb") as f:
+        som = pickle.load(f)
+
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+
+    df = model.experiment_df
+
+    scaler = MinMaxScaler()
+    year_mask = df["year"] == year
+    data_values = df[year_mask].drop(columns=model.ignored_columns).values
+    experiment_values = scaler.fit_transform(data_values)
+
+    years_list = model.experiment_df["year"].unique()
+
+    years = []
+    path = []
+    year_to_display = []
+
+    for year in years_list:
+        year_mask = df["year"] == year
+        country_mask = df["country_name_alpha_3"] == country_name
+        value = df[year_mask][country_mask].drop(columns=model.ignored_columns).values
+
+        if len(value):
+            year_to_display.append(year)
+            years.append(year)
+            path.append(value[0])
+
+    year_to_display = np.array(year_to_display)
+    path = scaler.transform(path)
+
+    periods = []
+    for index in year_to_display:
+        periods.append([index])
+
+    year_to_display.sort()
+    images = []
+    for period in periods:
+        name = df[df["country_name_alpha_3"] == country_name]["Country name"].to_list()[0]
+        print(period)
+        som.plot_analysis(
+            path,
+            year_to_display,
+            labels_to_display=period,
+            size=7,
+            display_empty_nodes=False,
+            title=f"Desplazamiento {name}",
+        )
+        filename = f"/static/{period[0]}.png"
+        images.append(filename)
+        plt.savefig(filename)
+
+    return {
+        "data": {
+            "images": images,
+            "lineplot": {
+                "columns": df.drop(columns=model.ignored_columns).columns.tolist(),
+                "x": year_to_display.tolist(),
+                "y": path.tolist(),
+            },
+        }
+    }
