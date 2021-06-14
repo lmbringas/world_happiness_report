@@ -149,9 +149,14 @@ async def get_report(dataset_name: str, year: int):
 
         mapped_values = []
         for mv in som.map_attachments(experiment_values, experiment_values)[clusters == cluster]:
-            mapped_values += mv[0].tolist()
+            mapped_values += mv
 
-        data = {"name": cluster_name, "countries": countries, "values": mapped_values}
+        mapped_values = np.array(mapped_values)
+        data = {
+            "name": cluster_name,
+            "countries": countries.tolist(),
+            "values": mapped_values.tolist(),
+        }
         print(data)
         result.append(data)
     return {"data": result}
