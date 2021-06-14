@@ -79,7 +79,7 @@ async def get_data(dataset_name: str, year: int):
 
     return_data = []
     for cluster in np.flip(np.unique(clusters)):
-        cluster_name = f"Cluster-{cluster}" if cluster != -1 else "Outliers"
+        cluster_name = f"Cluster {cluster}" if cluster != -1 else "Outliers"
         print(cluster_name)
 
         data = {"name": cluster_name, "countries": []}
@@ -103,8 +103,6 @@ async def get_data(dataset_name: str, year: int):
                 results["code"] = df[df["Country name"] == country].country_name_alpha_3.to_list()[
                     0
                 ]
-
-                print(results)
 
                 data["countries"].append(results)
         return_data.append(data)
