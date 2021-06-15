@@ -205,11 +205,11 @@ async def get_report_by_country(dataset_name: str, year: int, country_name: str)
     year_to_display = np.array(year_to_display)
     path = scaler.transform(path)
 
+    year_to_display.sort()
     periods = []
     for index in year_to_display:
         periods.append([index])
 
-    year_to_display.sort()
     images = []
     for period in periods:
         name = df[df["country_name_alpha_3"] == country_name]["Country name"].to_list()[0]
