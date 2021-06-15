@@ -257,9 +257,8 @@ async def prediction(
     filename = dataset.filename.replace(" ", "_")
     path = save_dataset(dataset, filename)
     df = pd.read_excel(path)
-    ignored_columns = ["Country name", "year"]
 
-    model = NeuronalMapModel(df, filename=dataset.filename, ignored_colums=ignored_columns)
+    model = NeuronalMapModel(df, filename=dataset.filename)
 
     clusters = som.hdbscan()[0]
     labels = np.flip(np.unique(clusters)).tolist()
@@ -269,9 +268,9 @@ async def prediction(
         pass
 
     scaler = MinMaxScaler()
-    data_values = model.imputed_df.drop(columns=["Country name", "year", "Life Ladder"]).values
+    data_values = model.imputed_df.drop(columns=model.ignored_columns + ["Life Ladder"]).values
     experiment_values = scaler.fit_transform(data_values)
-    columns = model.experiment_df.drop(columns=ignored_columns).columns.to_list()
+    columns = model.experiment_df.drop(columns=model.ignored_columns).columns.to_list()
     columns.insert(0, "Life Ladder")
 
     return_data = []
@@ -295,8 +294,8 @@ async def prediction(
 
             for country, activation in zip(countriy_list, activation_list):
                 results = {perspective: act for perspective, act in zip(columns, activation)}
-                results["code"] = train_model.experiment_df[
-                    train_model.experiment_df["Country name"] == country
+                results["code"] = model.experiment_df[
+                    model.experiment_df["Country name"] == country
                 ].country_name_alpha_3.to_list()[0]
 
                 data["countries"].append(results)
