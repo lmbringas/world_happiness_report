@@ -10,8 +10,9 @@ from fastapi.staticfiles import StaticFiles
 from matplotlib import pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
+from models.neuronal_map_model import NeuronalMapModel
 from processing.process_dataset import DATASET_DIRECTORY
-from processing.run_pipeline import run_pipeline
+from processing.run_pipeline import run_pipeline, save_dataset
 from processing.utils import create_directory
 
 app = FastAPI()
@@ -235,3 +236,66 @@ async def get_report_by_country(dataset_name: str, year: int, country_name: str)
             },
         }
     }
+
+
+@app.post("/prediction/")
+async def prediction(
+    dataset_name: str,
+    year: int,
+    dataset: UploadFile = File(...),
+):
+    som_path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/{year}__{dataset_name}.pickle"
+    model_path = f"{DATASET_DIRECTORY}/{dataset_name}__finished/model.pickle"
+    som = None
+    train_model = None
+    with open(som_path, "rb") as f:
+        som = pickle.load(f)
+
+    with open(model_path, "rb") as f:
+        train_model = pickle.load(f)
+
+    filename = dataset.filename.replace(" ", "_")
+    path = save_dataset(dataset, filename)
+    df = pd.read_excel(path)
+    ignored_columns = ["Country name", "year"]
+
+    model = NeuronalMapModel(df, filename=dataset.filename, ignored_colums=ignored_columns)
+
+    clusters = som.hdbscan()[0]
+    labels = np.flip(np.unique(clusters)).tolist()
+    labels.remove(-1)
+
+    scaler = MinMaxScaler()
+    data_values = model.imputed_df.drop(columns=["Country name", "year", "Life Ladder"]).values
+    experiment_values = scaler.fit_transform(data_values)
+    columns = model.experiment_df.drop(columns=ignored_columns).columns.to_list()
+    columns.insert(0, "Life Ladder")
+
+    return_data = []
+    for cluster in labels:
+        cluster_name = f"Cluster {cluster}"
+        print(cluster_name)
+
+        data = {"name": cluster_name, "countries": []}
+
+        countries = som.map_attachments(
+            experiment_values,
+            model.imputed_df["Country name"].tolist(),
+        )[clusters == cluster]
+
+        activations = som.map_attachments(
+            experiment_values,
+            model.imputed_df.drop(columns=model.ignored_columns).values,
+        )[clusters == cluster]
+
+        for countriy_list, activation_list in zip(countries, activations):
+
+            for country, activation in zip(countriy_list, activation_list):
+                results = {perspective: act for perspective, act in zip(columns, activation)}
+                results["code"] = train_model.experiment_df[
+                    train_model.experiment_df["Country name"] == country
+                ].country_name_alpha_3.to_list()[0]
+
+                data["countries"].append(results)
+        return_data.append(data)
+    return {"data": return_data}

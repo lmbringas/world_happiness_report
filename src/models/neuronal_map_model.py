@@ -15,7 +15,9 @@ class NeuronalMapModel:
     ignored_columns = ["Country name", "year", "country_name_alpha_3", "clean_country_names"]
     soms = {}
 
-    def __init__(self, dataframe, filename):
+    def __init__(self, dataframe, filename, ignored_colums=None):
+        if ignored_colums is not None:
+            self.ignored_columns = ignored_colums
         impute_columns = [
             column for column in dataframe.columns if column not in self.ignored_columns
         ]
