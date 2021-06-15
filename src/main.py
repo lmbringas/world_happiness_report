@@ -263,7 +263,10 @@ async def prediction(
 
     clusters = som.hdbscan()[0]
     labels = np.flip(np.unique(clusters)).tolist()
-    labels.remove(-1)
+    try:
+        labels.remove(-1)
+    except:
+        pass
 
     scaler = MinMaxScaler()
     data_values = model.imputed_df.drop(columns=["Country name", "year", "Life Ladder"]).values
