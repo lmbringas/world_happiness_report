@@ -81,7 +81,7 @@ class NeuronalMapModel:
                 display_value="cluster",
             )
             name = f"/static/{key}__{self.filename}.png"
-            plt.savefig(name)
+            plt.savefig(name, transparent=True)
 
     def _finished_dataset(self):
         source = f"{self.root_directory}/{self.filename}"
